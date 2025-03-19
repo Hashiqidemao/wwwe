@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>焓湿图状态参数查询</title>
+  <style>
+    /* 整体样式 */
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      background-color: #f4f4f4;
+    }
+
+    /* 输入框架样式 */
+   .input-frame {
+      background-color: white;
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+      width: 300px;
+    }
+
+    /* 输入框和标签样式 */
+    label {
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    input {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+    }
+
+    /* 计算按钮样式 */
+    button {
+      padding: 10px 20px;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      margin-bottom: 20px;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    /* 结果展示框架样式 */
+   .result-frame {
+      background-color: white;
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+      width: 300px;
+    }
+
+    /* 表格样式 */
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+
+    table th,
+    table td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+    }
+
+    /* 结果标签样式 */
+    #result-label {
+      margin-top: 10px;
+      color: red;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- 输入框架 -->
+  <div class="input-frame">
+    <label for="temperature">干球温度, ℃</label>
+    <input type="text" id="temperature" placeholder="请输入干球温度">
+    <label for="humidity">相对湿度, %</label>
+    <input type="text" id="humidity" placeholder="请输入相对湿度">
+  </div>
+
+  <!-- 计算按钮 -->
+  <button onclick="calculateAndDisplay()">计算</button>
+
+  <!-- 结果展示框架 -->
+  <div class="result-frame">
+    <table id="result-table">
+      <thead>
+        <tr>
+          <th>量</th>
+          <th>值</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>环境压力 (kPa)</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>含湿量 (g/kg)</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>湿球温度 (℃)</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>露点温度 (℃)</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>饱和温度 (℃)</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>焓 (kJ/kg)</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>蒸汽压力 (kPa)</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>比热 [kJ/(kg·K)]</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>比容 (m³/kg)</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>密度 (kg/m³)</td>
+          <td></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 结果标签 -->
+  <div id="result-label"></div>
+
+  <script>
+    function calculatePsychrometrics(T_db, RH) {
+      // 这里的计算逻辑是模拟Python版本的，实际需根据psychrolib库的算法在JavaScript中重新实现，这里只是示例
+      const P = 101325;
+      // 假设一些模拟计算结果，实际应按正确公式计算
+      const W = 0.01 * T_db * RH / 100;
+      const T_wb = T_db - 0.01 * (100 - RH);
+      const T_dp = T_db - 0.02 * (100 - RH);
+      const h = 1.006 * T_db + 2501 * W;
+      const p_v = P * RH / 100;
+      const v = (0.287 * (T_db + 273.15)) / P;
+      const rho = 1 / v;
+      const c_p = 1.006 + 1.86 * W;
+      const T_sat = 100;
+
+      return {
+        "环境压力 (kPa)": P / 1000,
+        "含湿量 (g/kg)": W * 1000,
+        "湿球温度 (℃)": T_wb,
+        "露点温度 (℃)": T_dp,
+        "饱和温度 (℃)": T_sat,
+        "焓 (kJ/kg)": h,
+        "蒸汽压力 (kPa)": p_v / 1000,
+        "比热 [kJ/(kg·K)]": c_p,
+        "比容 (m³/kg)": v,
+        "密度 (kg/m³)": rho
+      };
+    }
+
+    function calculateAndDisplay() {
+      const T_db = parseFloat(document.getElementById('temperature').value);
+      const RH = parseFloat(document.getElementById('humidity').value);
+      const resultLabel = document.getElementById('result-label');
+      if (isNaN(T_db) || isNaN(RH) || RH < 0 || RH > 100) {
+        resultLabel.textContent = "输入错误: 相对湿度必须在0 - 100%之间，且输入应为数字";
+        return;
+      }
+      const results = calculatePsychrometrics(T_db, RH / 100);
+      const resultTable = document.getElementById('result-table');
+      const rows = resultTable.querySelectorAll('tbody tr');
+      rows.forEach((row, index) => {
+        const param = row.cells[0].textContent;
+        const value = results[param];
+        if (param.includes("压力") || param.includes("焓")) {
+          row.cells[1].textContent = value.toFixed(3);
+        } else if (param.includes("温度")) {
+          row.cells[1].textContent = value.toFixed(2);
+        } else {
+          row.cells[1].textContent = value.toFixed(4);
+        }
+      });
+      resultLabel.textContent = "";
+    }
+  </script>
+</body>
+
+</html>
